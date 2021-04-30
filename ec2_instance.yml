@@ -1,0 +1,77 @@
+Description: 'home work web server'
+Parameters:
+  ImageId: 
+    Description: image id 
+    Type: String
+    Default: ami-0fea1272edeb6e13a
+
+  SubnetId1:
+    Description: Subnet Id where instance will create 
+    Type: String
+    Default: subnet-09da86b8fe7a32654
+
+  KeyName:
+    Description: key name
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Ohio-key
+
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+
+
+
+Resources:
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: open ssh and web port
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: '0.0.0.0/0'
+      VpcId: !ImportValue poc-devops-01-vpc-01
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref ImageId
+      SubnetId: !Ref SubnetId1
+      IamInstanceProfile: !Ref ConsoleInstanceProfile
+#     UserData:
+#        Fn::Base64: !Sub |
+#          #!/bin/bash
+#          aws s3 sync s3://poc-devops-01-s3bucket-01 /tmp && cd /tmp && chmod +x deploy.sh && ./deploy.sh
+          
+  ConsoleInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+      - !Ref RolePermissionServer
+      
+  RolePermissionServer:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        -
+          Action: "sts:AssumeRole"
+          Effect: "Allow"
+          Principal:
+            Service:
+              - "ec2.amazonaws.com"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+      - "arn:aws:iam::aws:policy/AmazonVPCReadOnlyAccess"
+
