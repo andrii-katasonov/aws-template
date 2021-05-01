@@ -13,7 +13,7 @@ Parameters:
   KeyName:
     Description: key name
     Type: AWS::EC2::KeyPair::KeyName
-    ConstraintDescription: Ohio-key
+    Default: Ohio-key
 
   InstanceType:
     Description: WebServer EC2 instance type
